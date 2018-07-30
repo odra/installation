@@ -1,2 +1,6 @@
 [local]
 127.0.0.1
+
+[local:vars]
+ansible_connection=local
+openshift_master_host=127.0.0.1

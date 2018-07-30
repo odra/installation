@@ -1,0 +1,46 @@
+---
+- name: Generate auth token
+  shell: oc whoami -t
+  register: auth_token
+
+- name: "Updating to latest RH-SSO template: {{ rhsso_template }}"
+  shell: oc replace -n openshift --force -f https://raw.githubusercontent.com/jboss-openshift/application-templates/ose-v1.4.11/sso/sso72-x509-postgresql-persistent.json
+  when: rhsso_force_template_update
+
+- name: Install image streams
+  shell: oc -n openshift import-image redhat-sso72-openshift:1.1
+  when: rhsso_force_image_streams_update
+
+- name: "Create project namespace: {{ rhsso_namespace }}"
+  oc:
+    state: present
+    inline:
+      kind: ProjectRequest
+      metadata:
+        name: "{{ rhsso_namespace }}"
+      description: RH Single Sign On Project
+    token: "{{ auth_token.stdout }}"
+    host: "{{ openshift_master_host }}"
+
+- name: "Add view role to {{ rhsso_namespace }} default service account"
+  oc:
+    state: present
+    inline:
+      kind: RoleBinding
+      metadata:
+        name: view
+        namespace: "{{ rhsso_namespace }}"
+      roleRef:
+        name: view
+      userNames:
+        - "system:serviceaccount:{{ rhsso_namespace }}:default"
+    token: "{{ auth_token.stdout }}"
+    host: "{{ openshift_master_host }}"
+
+- name: Check namespace for existing resources
+  shell: oc get all -n {{ rhsso_namespace }}
+  register: rhsso_resources_exist
+
+- name: "Provision RH-SSO using template {{ rhsso_template }} in namespace {{ rhsso_namespace }}"
+  shell: "oc new-app --template=sso72-x509-postgresql-persistent -p SSO_ADMIN_USERNAME={{ rhsso_admin_username }} -p SSO_SERVICE_USERNAME={{ rhsso_service_username }} -p SSO_REALM={{ rhsso_realm }} -n {{rhsso_namespace}}"
+  when: rhsso_resources_exist.stderr == "No resources found."

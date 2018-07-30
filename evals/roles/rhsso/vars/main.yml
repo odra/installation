@@ -1,0 +1,8 @@
+#rhsso vars
+rhsso_namespace: rhsso
+rhsso_template: sso72-x509-postgresql-persistent
+rhsso_admin_username: admin
+rhsso_service_username: sso-service-user
+rhsso_realm: openshift
+rhsso_force_template_update: true
+rhsso_force_image_streams_update: true

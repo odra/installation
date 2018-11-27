@@ -1,0 +1,7 @@
+---
+- hosts: local
+  gather_facts: true
+  tasks:
+    - include_role:
+        name: rhsso
+        tasks_from: create-realm

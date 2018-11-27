@@ -1,0 +1,73 @@
+{
+    "apiVersion": "aerogear.org/v1alpha1",
+    "kind": "KeycloakRealm",
+    "metadata": {
+      "name": "{{ rhsso_realm }}"
+    },
+    "spec": {
+        "id": "{{ rhsso_realm }}",
+        "realm": "{{ rhsso_realm }}",
+        "displayName": "{{ rhsso_realm }}",
+        "enabled": true,
+        "users": [
+            {
+                "enabled":true,
+                "attributes":{},
+                "username":"{{ rhsso_evals_admin_username }}",
+                "emailVerified":true,
+                "email":"{{ rhsso_evals_admin_email }}",
+                "password": "{{ rhsso_evals_admin_password }}",
+                "realmRoles": [
+                    "offline_access",
+                    "uma_authorization"
+                ],
+                "clientRoles": {
+                    "account": [
+                        "manage-account",
+                        "view-profile"
+                    ]
+                },
+                "outputSecret": "evals-admin-user-credentials"
+            },
+            {
+                "enabled":true,
+                "attributes":{},
+                "username":"{{ rhsso_cluster_admin_username }}",
+                "emailVerified":true,
+                "email":"{{ rhsso_cluster_admin_email }}",
+                "password": "{{ rhsso_cluster_admin_password }}",
+                "realmRoles": [
+                    "offline_access",
+                    "uma_authorization"
+                ],
+                "clientRoles": {
+                    "account": [
+                        "manage-account",
+                        "view-profile"
+                    ]
+                },
+                "outputSecret": "admin-user-credentials"
+            },
+            {
+                "enabled":true,
+                "attributes":{},
+                "username":"{{ rhsso_evals_username }}",
+                "emailVerified":true,
+                "email":"{{ rhsso_evals_email }}",
+                "password": "{{ rhsso_evals_password }}",
+                "realmRoles": [
+                    "offline_access",
+                    "uma_authorization"
+                ],
+                "clientRoles": {
+                    "account": [
+                        "manage-account",
+                        "view-profile"
+                    ]
+                },
+                "outputSecret": "test-user-credentials"
+            }
+        ],
+        "clients": []
+    }
+  }

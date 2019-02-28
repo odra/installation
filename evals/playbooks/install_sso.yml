@@ -2,6 +2,8 @@
 - hosts: localhost
   gather_facts: true
   tasks:
+    - include_role:
+        name: lib_integreatly
     - name: Expose vars
       include_vars: "../roles/rhsso/defaults/main.yml"
     -

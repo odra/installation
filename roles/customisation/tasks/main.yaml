@@ -252,7 +252,7 @@
             type: "keycloak"
     - set_fact:
         component_manifests: "{{component_manifests}} + {{ user_rhsso_manifest }}"
-  when: user_rhsso
+  when: user_rhsso | default(true) | bool
 
 #mobile security service(mss)
 - name: Get Mobile Security Service rest route

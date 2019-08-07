@@ -14,17 +14,20 @@
       include_role:
         name: datasync
       tags: ['datasync']
+      when: datasync
     
     - name: Install unified push server (ups)
       include_role:
         name: ups
       tags: ['ups']
+      when: ups
 
     -
       name: Install Mobile Security Service
       include_role:
         name: mobile_security_service
       tags: ['mobile_security_service']
+      when: mobile_security_service
 
     - name: Install mobile developer console (mdc)
       include_role:
@@ -32,6 +35,7 @@
       vars:
         openshift_master_url: "{{ hostvars['EVAL_VARS']['openshift_master_url'] | replace('https://', '') }}"
       tags: ['mdc']
+      when: mdc
 
     - name: User rhsso configuration
       include_role:
@@ -91,6 +95,7 @@
                 type: "push"
         - set_fact:
             mobile_components: "{{ mobile_components }} + {{ ups_manifest }}"
+      when: ups
 
     # mobile developer console (mdc)
     - name: Mobile Developer Console
@@ -108,17 +113,20 @@
                 host: "{{ mdc_route }}"
         - set_fact:
             mobile_components: "{{ mobile_components }} + {{ mdc_manifest }}"
+      when: mdc
 
     - name: Add mobile items to manifest definition
       manifest_add:
         manifest: "{{ webapp_manifest }}"
         items: "{{ mobile_components }}"
       register: manifest_add_out
+      when: mobile_components|length > 0
 
     - name: Write config to file
       copy:
         content: "{{ manifest_add_out.manifest | to_nice_json }}"
         dest: "/tmp/mobile-manifest.json"
+      when: mobile_components|length > 0
 
     - name: Create manifest file in webapp namespace
       block:
@@ -133,6 +141,7 @@
 
         - name: Create manifest secret
           shell: oc create secret generic manifest --from-file=generated_manifest=/tmp/mobile-manifest.json --type=application/json -n {{ eval_webapp_namespace }}
+      when: mobile_components|length > 0
 
     - name: Create manifest file in mdc namespace
       block:
@@ -147,6 +156,7 @@
 
         - name: Create manifest secret
           shell: oc create secret generic manifest --from-file=generated_manifest=/tmp/mobile-manifest.json --type=application/json -n {{ mdc_namespace }}
+      when: mobile_components|length > 0
 
 - hosts: master
   gather_facts: no
@@ -156,6 +166,7 @@
         tasks_from: cors.yml
       vars:
         openshift_master_url: "{{ hostvars['EVAL_VARS']['openshift_master_url'] | replace('https://', '') }}"
+      when: mdc
     
     - include_role:
         name: mdc
@@ -163,7 +174,9 @@
       vars:
         mdc_manifest_secret_name: manifest
       tags: ['mdc', 'remote']
-      when: run_master_tasks | default(true) | bool
+      when:
+        - run_master_tasks | default(true) | bool
+        - mdc
     
     - name: restart openshift master services
       shell: "/usr/local/bin/master-restart {{ item }}"
@@ -171,6 +184,7 @@
       with_items:
         - api
         - controllers
+      when: mdc
 
     - name: check if openshift master services are running
       shell: oc get nodes
@@ -179,3 +193,4 @@
       retries: 6
       delay: 5
       failed_when: task_result.rc != 0
+      when: mdc

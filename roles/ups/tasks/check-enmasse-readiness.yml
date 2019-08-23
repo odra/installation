@@ -1,0 +1,14 @@
+- name: Wait for operator ServiceAccount to have access to {{ resource_type }} resource from enmasse
+  shell: "oc auth can-i create {{ resource_type }} -n {{ ups_namespace }} --as system:serviceaccount:{{ ups_namespace }}:unifiedpush-operator"
+  register: result
+  until: result.rc == 0
+  retries: 50
+  delay: 10
+
+- name: Check if resource {{ resource_type }} can be managed from the ups namespace
+  shell: "oc get {{ resource_type }}/{{ resource_name }} -n {{ ups_namespace }} --as system:serviceaccount:{{ ups_namespace }}:unifiedpush-operator"
+  register: result
+  until: "result.stderr and 'Not Found' in result.stderr"
+  failed_when: "result.stderr and 'Not Found' not in result.stderr"
+  retries: 50
+  delay: 10  

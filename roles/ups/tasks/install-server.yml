@@ -17,4 +17,27 @@
   until: result.stdout == 'Complete'
   retries: 50
   delay: 10
+  failed_when: false
   changed_when: False
+
+- name: Redeploy operator pod in case of readiness check timeout
+  block:
+    - shell: "oc get pods -o name -l 'name=unifiedpush-operator' -n {{ ups_namespace }}"
+      register: ups_operator_pod_cmd
+    - shell: "oc delete {{ ups_operator_pod_cmd.stdout }} -n {{ ups_namespace }}"
+    - shell: "oc get pods -o name -l 'name=unifiedpush-operator' -n {{ ups_namespace }}"
+      register: result
+      until: "result.stdout and 'pod/' in result.stdout"
+      retries: 50
+      delay: 10
+      failed_when: result.stderr
+      changed_when: False
+    - name: Wait for ups readiness
+      shell: "oc get unifiedpushserver/{{ ups_server_name }} -o jsonpath='{.status.phase}' -n {{ ups_namespace }}"
+      register: result
+      until: result.stdout == 'Complete'
+      retries: 50
+      delay: 10
+      failed_when: false
+      changed_when: False
+  when: result.stdout != 'Complete'
